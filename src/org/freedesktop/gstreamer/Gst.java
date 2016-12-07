@@ -45,6 +45,7 @@ import org.freedesktop.gstreamer.elements.BaseSink;
 import org.freedesktop.gstreamer.elements.BaseSrc;
 import org.freedesktop.gstreamer.elements.BaseTransform;
 import org.freedesktop.gstreamer.elements.DecodeBin;
+import org.freedesktop.gstreamer.elements.FakeSink;
 import org.freedesktop.gstreamer.elements.PlayBin;
 import org.freedesktop.gstreamer.elements.URIDecodeBin;
 import org.freedesktop.gstreamer.glib.GDate;
@@ -478,6 +479,7 @@ public final class Gst {
 		BaseTransform.class,
 		Bin.class,
 		DecodeBin.class,
+		FakeSink.class,
 		Pipeline.class,
 		PlayBin.class,
 		URIDecodeBin.class,
