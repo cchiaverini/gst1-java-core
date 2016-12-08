@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright (c) 2007 Wayne Meissner
- * 
+ *
  * This file is part of gstreamer-java.
  *
  * This code is free software: you can redistribute it and/or modify it under
@@ -63,13 +63,13 @@ import com.sun.jna.Platform;
 /**
  *
  */
-public class VideoComponent extends javax.swing.JComponent {
+public final class VideoComponent extends javax.swing.JComponent {
 
     private static final long serialVersionUID = -8916459410626088872L;
 
     private BufferedImage currentImage = null;
     private final Lock bufferLock = new ReentrantLock();
-    private RGBDataSink videosink;
+    private final RGBDataSink videosink;
     private Pad videoPad;
     private RenderingHints renderingHints = null;
     private RenderComponent renderComponent = new RenderComponent();
@@ -83,11 +83,11 @@ public class VideoComponent extends javax.swing.JComponent {
     private boolean frameRendered = false;
     private volatile boolean updatePending = false;
     private final boolean useVolatile;
-    
-    private RGBListener rgbListener;
-    private PropertyChangeListener propListener;
-    private ComponentAdapter componentAdapter;
-    
+
+    private final RGBListener rgbListener;
+    private final PropertyChangeListener propListener;
+    private final ComponentAdapter componentAdapter;
+
     private final static Class<?> oglGraphicsConfigClass;
     private final static Map<RenderingHints.Key, Object> openglHints = new HashMap<RenderingHints.Key, Object>() {
 
@@ -110,7 +110,7 @@ public class VideoComponent extends javax.swing.JComponent {
     static {
         quartzEnabled = Boolean.getBoolean("apple.awt.graphics.UseQuartz");
         try {
-            ddscaleEnabled = Boolean.getBoolean("sun.java2d.ddscale") 
+            ddscaleEnabled = Boolean.getBoolean("sun.java2d.ddscale")
                     && Boolean.getBoolean("sun.java2d.d3d");
         } catch (Exception ex) { }
         Class<?> cls;
@@ -121,7 +121,7 @@ public class VideoComponent extends javax.swing.JComponent {
         }
         oglGraphicsConfigClass = cls;
     }
-    
+
     /** Creates a new instance of GstVideoComponent */
     public VideoComponent() {
         rgbListener = new RGBListener();
@@ -130,31 +130,32 @@ public class VideoComponent extends javax.swing.JComponent {
         // Limit the lateness of frames to no more than 20ms (half a frame at 25fps)
         videosink.getSinkElement().setMaximumLateness(20, TimeUnit.MILLISECONDS);
         videosink.getSinkElement().setQOSEnabled(true);
-        
+
         // On MacOS, swing is un-accelerated, so using volatile actually slows it down a bit
         useVolatile = !Platform.isMac();
-        
+
         // Get the pad to use to send events on
         videoPad = videosink.getSinkPads().get(0);
-        
+
         //
         // Kick off a timer to free up the volatile image if there have been no recent updates
         // (e.g. the player is paused)
         //
         resourceTimer = new Timer(250, resourceReaper);
-        
+
         //
-        // Don't use a layout manager - the output component will positioned within this 
+        // Don't use a layout manager - the output component will positioned within this
         // component according to the aspect ratio and scaling mode
         //
         setLayout(null);
         add(renderComponent);
-        
+
         //
-        // Listen for the child changing its preferred size to the size of the 
+        // Listen for the child changing its preferred size to the size of the
         // video stream.
         //
         propListener = new PropertyChangeListener() {
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 setPreferredSize(renderComponent.getPreferredSize());
                 scaleVideoOutput();
@@ -179,7 +180,7 @@ public class VideoComponent extends javax.swing.JComponent {
         setOpaque(true);
         setBackground(Color.BLACK);
     }
-    
+
     private final MouseInputListener mouseListener = new MouseInputAdapter() {
         /**
          * Gets the scaled X position of the mouse event.
@@ -200,12 +201,12 @@ public class VideoComponent extends javax.swing.JComponent {
          */
         private void mouse(String event, MouseEvent evt) {
 //            System.out.printf("%s (%d, %d) button=%x\n", event, evt.getX(), evt.getY(), evt.getButton());
-            NavigationEvent nav = NavigationEvent.createMouseEvent(event, getX(evt), getY(evt), 
+            NavigationEvent nav = NavigationEvent.createMouseEvent(event, getX(evt), getY(evt),
                     evt.getButton());
             videoPad.pushEvent(nav);
         }
 
-        
+
         @Override
         public void mousePressed(MouseEvent evt) {
             mouse("mouse-button-press", evt);
@@ -262,7 +263,7 @@ public class VideoComponent extends javax.swing.JComponent {
             key("key-release", evt);
         }
     };
-    
+
     private void updateRenderingHints(Class<?> gcClass) {
         Map<RenderingHints.Key, Object> hints = new HashMap<RenderingHints.Key, Object>();
         if (gcClass != null && oglGraphicsConfigClass != null &&
@@ -273,7 +274,7 @@ public class VideoComponent extends javax.swing.JComponent {
             hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
             hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
             hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-            
+
         } else if (ddscaleEnabled) {
             hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         } else {
@@ -281,7 +282,7 @@ public class VideoComponent extends javax.swing.JComponent {
         }
         renderingHints = new RenderingHints(hints);
     }
-    
+
     /**
      * Scales the video output component according to its aspect ratio
      */
@@ -291,7 +292,7 @@ public class VideoComponent extends javax.swing.JComponent {
         final int width = getWidth(), height = getHeight();
         // Figure out the aspect ratio
         double aspect = keepAspect ? (double) childSize.width / (double) childSize.height : 1.0f;
-        
+
         //
         // Now scale and position the videoChild component to be in the correct position
         // to keep the aspect ratio correct.
@@ -304,7 +305,7 @@ public class VideoComponent extends javax.swing.JComponent {
             child.setBounds(0, 0, width, height);
         } else if (scaledHeight < height) {
             //
-            // Output window is taller than the image is when scaled, so move the 
+            // Output window is taller than the image is when scaled, so move the
             // video component to sit vertically in the centre of the VideoComponent.
             //
             final int y = (height - scaledHeight) / 2;
@@ -315,7 +316,9 @@ public class VideoComponent extends javax.swing.JComponent {
             child.setBounds(x, 0, scaledWidth, height);
         }
     }
-    private ActionListener resourceReaper = new ActionListener() {
+
+    private final ActionListener resourceReaper = new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent arg0) {
             if (!frameRendered) {
                 if (volatileImage != null) {
@@ -332,7 +335,7 @@ public class VideoComponent extends javax.swing.JComponent {
     public Element getElement() {
         return videosink;
     }
-    
+
     public void setKeepAspect(boolean keepAspect) {
         this.keepAspect = keepAspect;
     }
@@ -346,7 +349,7 @@ public class VideoComponent extends javax.swing.JComponent {
     public boolean isOpaque() {
         return super.isOpaque() && alpha >= 1.0f;
     }
-    
+
     @Override
     protected void paintComponent(Graphics g) {
         if (isOpaque()) {
@@ -411,13 +414,13 @@ public class VideoComponent extends javax.swing.JComponent {
     public float getOpacity() {
         return alpha;
     }
-    
+
     private void renderVolatileImage(BufferedImage bufferedImage) {
         do {
             int w = bufferedImage.getWidth(), h = bufferedImage.getHeight();
             GraphicsConfiguration gc = getGraphicsConfiguration();
-            if (volatileImage == null || volatileImage.getWidth() != w 
-                    || volatileImage.getHeight() != h 
+            if (volatileImage == null || volatileImage.getWidth() != w
+                    || volatileImage.getHeight() != h
                     || volatileImage.validate(gc) == VolatileImage.IMAGE_INCOMPATIBLE) {
                 if (volatileImage != null) {
                     volatileImage.flush();
@@ -425,7 +428,7 @@ public class VideoComponent extends javax.swing.JComponent {
                 volatileImage = gc.createCompatibleVolatileImage(w, h);
                 volatileImage.setAccelerationPriority(1.0f);
             }
-            // 
+            //
             // Now paint the BufferedImage into the accelerated image
             //
             Graphics2D g = volatileImage.createGraphics();
@@ -433,7 +436,7 @@ public class VideoComponent extends javax.swing.JComponent {
             g.dispose();
         } while (volatileImage.contentsLost());
     }
-    
+
     /**
      * Renders to a volatile image, and then paints that to the screen.
      * This helps with scaling performance on accelerated surfaces (e.g. OpenGL)
@@ -446,7 +449,7 @@ public class VideoComponent extends javax.swing.JComponent {
      */
     private void volatileRender(Graphics g, int x, int y, int w, int h) {
         do {
-            if (updatePending || volatileImage == null 
+            if (updatePending || volatileImage == null
                 || volatileImage.validate(getGraphicsConfiguration()) != VolatileImage.IMAGE_OK) {
                 bufferLock.lock();
                 try {
@@ -459,7 +462,7 @@ public class VideoComponent extends javax.swing.JComponent {
             g.drawImage(volatileImage, x, y, w, h, null);
         } while (volatileImage.contentsLost());
     }
-    
+
     /**
      * Renders directly to the given <tt>Graphics</tt>.
      * This is only really useful on MacOS where swing graphics are unaccelerated
@@ -480,7 +483,7 @@ public class VideoComponent extends javax.swing.JComponent {
             bufferLock.unlock();
         }
     }
-    
+
     /**
      * Renders the current frame to the given <tt>Graphics</tt>.
      *
@@ -491,7 +494,7 @@ public class VideoComponent extends javax.swing.JComponent {
      * @param h the height of the paint area
      */
     private void render(Graphics g, int x, int y, int w, int h) {
-        if (useVolatile) { 
+        if (useVolatile) {
             volatileRender(g, x, y, w, h);
         } else {
             heapRender(g, x, y, w, h);
@@ -506,12 +509,13 @@ public class VideoComponent extends javax.swing.JComponent {
             }
         }
     }
-    
+
     private int imgWidth = 0, imgHeight = 0;
-    
-    private final void update(final int width, final int height) {
+
+    private void update(final int width, final int height) {
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 //
                 // If the image changed size, resize the component to fit
@@ -523,7 +527,7 @@ public class VideoComponent extends javax.swing.JComponent {
                 }
 
                 if (renderComponent.isVisible()) {
-                    renderComponent.paintImmediately(0, 0, 
+                    renderComponent.paintImmediately(0, 0,
                         renderComponent.getWidth(), renderComponent.getHeight());
                 }
             }
@@ -542,13 +546,14 @@ public class VideoComponent extends javax.swing.JComponent {
         return currentImage;
     }
     private class RGBListener implements RGBDataSink.Listener {
+        @Override
         public void rgbFrame(boolean isPrerollFrame, int width, int height, IntBuffer rgb) {
             // If the EDT is still copying data from the buffer, just drop this frame
             //
             if (!bufferLock.tryLock()) {
                 return;
             }
-            
+
             //
             // If there is already a swing update pending, also drop this frame.
             //
@@ -564,7 +569,7 @@ public class VideoComponent extends javax.swing.JComponent {
             } finally {
                 bufferLock.unlock();
             }
-            
+
             int scaledWidth = currentImage.getWidth();
             if (keepAspect) {
                 // Scale width according to pixel aspect ratio.
@@ -579,9 +584,9 @@ public class VideoComponent extends javax.swing.JComponent {
 
             // Tell swing to use the new buffer
             update(scaledWidth, currentImage.getHeight());
-        } 
+        }
     }
-    
+
     public void destroy() {
         renderComponent.removePropertyChangeListener(propListener);
         renderComponent.removeMouseListener(mouseListener);
