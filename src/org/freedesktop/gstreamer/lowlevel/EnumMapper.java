@@ -21,6 +21,7 @@ package org.freedesktop.gstreamer.lowlevel;
 import java.lang.reflect.Field;
 import java.util.EnumSet;
 
+import org.freedesktop.gstreamer.MessageType;
 import org.freedesktop.gstreamer.lowlevel.annotations.DefaultEnumValue;
 
 /**
@@ -41,7 +42,12 @@ public class EnumMapper {
         // Just loop around all the enum values and find one that matches.
         // Storing the values in a Map might be faster, but by the time you deal
         // with locking overhead, its hardly worth it for small enums.
-        // 
+        //
+        if(value == -2147483644) {
+            return (E) MessageType.UNKNOWN;
+
+        }
+
         if (IntegerEnum.class.isAssignableFrom(enumClass)) {
             for (E e : EnumSet.allOf(enumClass)) {
                 if (((IntegerEnum) e).intValue() == value) {
