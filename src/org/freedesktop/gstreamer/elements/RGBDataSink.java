@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright (c) 2007 Wayne Meissner
- * 
+ *
  * This file is part of gstreamer-java.
  *
  * This code is free software: you can redistribute it and/or modify it under
@@ -39,17 +39,17 @@ import org.freedesktop.gstreamer.lowlevel.GstNative;
  */
 public class RGBDataSink extends Bin {
     private static final GstBinAPI gst = GstNative.load(GstBinAPI.class);
-    private final BaseSink videosink;    
+    private final BaseSink videosink;
     private boolean passDirectBuffer = false;
     private Listener listener;
-    
+
     public static interface Listener {
         void rgbFrame(boolean isPrerollFrame, int width, int height, IntBuffer rgb);
     }
-    
+
     /**
      * Creates a new instance of RGBDataSink with the given name.
-     * 
+     *
      * @param name The name used to identify this pipeline.
      */
     public RGBDataSink(String name, Listener listener) {
@@ -60,7 +60,7 @@ public class RGBDataSink extends Bin {
         videosink.set("sync", true);
         videosink.connect((BaseSink.HANDOFF) new VideoHandoffListener());
         videosink.connect((BaseSink.PREROLL_HANDOFF) new VideoHandoffListener());
-        
+
         //
         // Convert the input into 32bit RGB so it can be fed directly to a BufferedImage
         //
@@ -76,7 +76,7 @@ public class RGBDataSink extends Bin {
         videofilter.setCaps(new Caps(caps.toString()));
         addMany(conv, videofilter, videosink);
         Element.linkMany(conv, videofilter, videosink);
-        
+
         //
         // Link the ghost pads on the bin to the sink pad on the convertor
         //
@@ -89,11 +89,11 @@ public class RGBDataSink extends Bin {
 
         Element element = pipeline.getElementByName(name);
         if (element != null) {
-            
-            // TODO: Fix. This doesn't work as it should. getElementByName() returns a 
+
+            // TODO: Fix. This doesn't work as it should. getElementByName() returns a
             // BaseSink which cannot be casted to FakeSink.
             videosink = (BaseSink) element;
-            
+
             videosink.set("signal-handoffs", true);
             videosink.set("sync", true);
             videosink.connect((BaseSink.HANDOFF) new VideoHandoffListener());
@@ -105,28 +105,28 @@ public class RGBDataSink extends Bin {
     }
 
     /**
-     * Sets the listener to null. This should be used when disposing 
+     * Sets the listener to null. This should be used when disposing
      * the parent object that contains the listener method, to make sure
      * that no dangling references remain to the parent.
-     */    
+     */
     public void removeListener() {
       this.listener = null;
-    }    
-    
+    }
+
     /**
      * Indicate whether the {@link RGBDataSink} should pass the native {@link java.nio.IntBuffer}
      * to the listener, or should copy it to a heap buffer.  The default is to pass
      * a heap {@link java.nio.IntBuffer} copy of the data
-     * @param passThru If true, pass through the native IntBuffer instead of 
+     * @param passThru If true, pass through the native IntBuffer instead of
      * copying it to a heap IntBuffer.
      */
     public void setPassDirectBuffer(boolean passThru) {
         this.passDirectBuffer = passThru;
     }
-    
+
     /**
      * Gets the actual gstreamer sink element.
-     * 
+     *
      * @return a BaseSink
      */
     public BaseSink getSinkElement() {
@@ -137,16 +137,16 @@ public class RGBDataSink extends Bin {
         public void handoff(BaseSink sink, Buffer buffer, Pad pad) {
         	doHandoff(buffer, pad, false);
         }
-        
+
         public void prerollHandoff(BaseSink sink, Buffer buffer, Pad pad) {
         	doHandoff(buffer, pad, true);
-    	}        
-        
+    	}
+
         private void doHandoff(Buffer buffer, Pad pad, boolean isPrerollFrame) {
-        	
+
             Caps caps = pad.getNegotiatedCaps();
-            Structure struct = caps.getStructure(0); 
-			
+            Structure struct = caps.getStructure(0);
+
             int width = struct.getInteger("width");
             int height = struct.getInteger("height");
             if (width < 1 || height < 1) {
@@ -159,11 +159,13 @@ public class RGBDataSink extends Bin {
                 rgb = IntBuffer.allocate(width * height);
                 rgb.put(buffer.map(false).asIntBuffer()).flip();
             }
-            
             listener.rgbFrame(isPrerollFrame, width, height, rgb);
-            
+
+            buffer.unmap();
+//            rgb.clear();
+
             //
-            // Dispose of the gstreamer buffer immediately to avoid more being 
+            // Dispose of the gstreamer buffer immediately to avoid more being
             // allocated before the java GC kicks in
             //
             buffer.dispose();

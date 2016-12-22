@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright (c) 2007 Wayne Meissner
- * 
+ *
  * This file is part of gstreamer-java.
  *
  * This code is free software: you can redistribute it and/or modify it under
@@ -35,28 +35,28 @@ import com.sun.jna.Pointer;
  */
 public class MainLoop extends RefCountedObject {
     private static final List<Runnable> bgTasks = new LinkedList<Runnable>();
-    
-    /** 
+
+    /**
      * Creates a new instance of {@code MainLoop}
-     * 
+     *
      * <p> This will create a new main loop on the default gstreamer main context.
-     * 
+     *
      */
     public MainLoop() {
         super(initializer(GLIB_API.g_main_loop_new(Gst.getMainContext(), false)));
     }
-    
+
     /**
      * Creates a new instance of {@code MainLoop}
-     * 
+     *
      * <p> This variant is used internally.
-     * 
+     *
      * @param init internal initialization data.
      */
-    public MainLoop(Initializer init) { 
-        super(init); 
+    public MainLoop(Initializer init) {
+        super(init);
     }
-    
+
     /**
      * Instructs a main loop to stop processing and return from {@link #run}.
      */
@@ -67,34 +67,34 @@ public class MainLoop extends RefCountedObject {
             }
         });
     }
-    
+
     /**
      * Enter a loop, processing all events.
-     * <p> The loop will continue processing events until {@link #quit} is 
+     * <p> The loop will continue processing events until {@link #quit} is
      * called.
      */
     public void run() {
         GLIB_API.g_main_loop_run(this);
     }
-    
+
     /**
      * Returns whether this main loop is currently processing or not.
-     * 
+     *
      * @return <tt>true</tt> if the main loop is currently being run.
      */
     public boolean isRunning() {
         return GLIB_API.g_main_loop_is_running(this);
     }
-    
+
     /**
      * Gets the main context for this main loop.
-     * 
+     *
      * @return a main context.
      */
     public GMainContext getMainContext() {
         return GLIB_API.g_main_loop_get_context(this);
     }
-    
+
     /**
      * Runs the main loop in a background thread.
      */
@@ -109,11 +109,11 @@ public class MainLoop extends RefCountedObject {
         bgThread.setName("gmainloop");
         bgThread.start();
     }
-    
+
     /**
      * Invokes a task on the main loop thread.
      * <p> This method will wait until the task has completed before returning.
-     * 
+     *
      * @param r the task to invoke.
      */
     public void invokeAndWait(Runnable r) {
@@ -131,22 +131,25 @@ public class MainLoop extends RefCountedObject {
         public boolean callback(Pointer source) {
             //            System.out.println("Running g_idle callbacks");
             List<Runnable> tasks = new ArrayList<Runnable>();
-            synchronized (bgTasks) {
-                tasks.addAll(bgTasks);
-                bgTasks.clear();
+            try {
+                synchronized (bgTasks) {
+                    tasks.addAll(bgTasks);
+                    bgTasks.clear();
+                }
+                for (Runnable r : tasks) {
+                    r.run();
+                }
+            } finally {
+                GLIB_API.g_source_unref(source);
             }
-            for (Runnable r : tasks) {
-                r.run();
-            }
-            GLIB_API.g_source_unref(source);
             return false;
         }
     };
     /**
      * Invokes a task on the main loop thread.
-     * <p> This method returns immediately, without waiting for the task to 
+     * <p> This method returns immediately, without waiting for the task to
      * complete.
-     * 
+     *
      * @param r the task to invoke.
      */
     public void invokeLater(final Runnable r) {
@@ -164,7 +167,7 @@ public class MainLoop extends RefCountedObject {
             }
         }
     }
-    
+
     //--------------------------------------------------------------------------
     // protected methods
     //
@@ -174,21 +177,21 @@ public class MainLoop extends RefCountedObject {
     protected void ref() {
         GLIB_API.g_main_loop_ref(this);
     }
-    
+
     /**
      * Decreases the reference count on the native {@code GMainLoop}
      */
     protected void unref() {
         GLIB_API.g_main_loop_unref(this);
     }
-    
+
     /**
      * Frees the native {@code GMainLoop}
      */
     protected void disposeNativeHandle(Pointer ptr) {
         GLIB_API.g_main_loop_unref(ptr);
     }
-    
+
     //--------------------------------------------------------------------------
     // Instance variables
     //

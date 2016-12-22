@@ -84,4 +84,14 @@
                 <test>${packageClassName}</test>
             </properties>
         </action>
+        <action>
+            <actionName>CUSTOM-Install</actionName>
+            <displayName>Install</displayName>
+            <goals>
+                <goal>install</goal>
+            </goals>
+            <properties>
+                <maven.test.skip>true</maven.test.skip>
+            </properties>
+        </action>
     </actions>
