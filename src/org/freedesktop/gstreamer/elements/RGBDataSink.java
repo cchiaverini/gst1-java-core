@@ -144,26 +144,27 @@ public class RGBDataSink extends Bin {
 
         private void doHandoff(Buffer buffer, Pad pad, boolean isPrerollFrame) {
 
-            Caps caps = pad.getNegotiatedCaps();
-            Structure struct = caps.getStructure(0);
+            if (listener != null) {
+                Caps caps = pad.getNegotiatedCaps();
+                Structure struct = caps.getStructure(0);
 
-            int width = struct.getInteger("width");
-            int height = struct.getInteger("height");
-            if (width < 1 || height < 1) {
-                return;
+                int width = struct.getInteger("width");
+                int height = struct.getInteger("height");
+                if (width < 1 || height < 1) {
+                    return;
+                }
+                IntBuffer rgb;
+                if (passDirectBuffer) {
+                    rgb = buffer.map(false).asIntBuffer();
+                } else {
+                    rgb = IntBuffer.allocate(width * height);
+                    rgb.put(buffer.map(false).asIntBuffer()).flip();
+                }
+                listener.rgbFrame(isPrerollFrame, width, height, rgb);
+
+                buffer.unmap();
+//                rgb.clear();
             }
-            IntBuffer rgb;
-            if (passDirectBuffer) {
-                rgb = buffer.map(false).asIntBuffer();
-            } else {
-                rgb = IntBuffer.allocate(width * height);
-                rgb.put(buffer.map(false).asIntBuffer()).flip();
-            }
-            listener.rgbFrame(isPrerollFrame, width, height, rgb);
-
-            buffer.unmap();
-//            rgb.clear();
-
             //
             // Dispose of the gstreamer buffer immediately to avoid more being
             // allocated before the java GC kicks in
