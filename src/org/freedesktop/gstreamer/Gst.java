@@ -449,11 +449,13 @@ public final class Gst {
 		GDate.class,
 		GValue.class,
 		GValueArray.class,
+        TagList.class,
 		TimedValue.class,
 		ValueArray.class,
 		ValueList.class,
 		// ----------- Base -------------
 		Buffer.class,
+		BufferPool.class,
 		Bus.class,
 		Caps.class,
 		Clock.class,
@@ -482,8 +484,6 @@ public final class Gst {
 		FakeSink.class,
 		Pipeline.class,
 		PlayBin.class,
-		URIDecodeBin.class,
-        //
-        TagList.class
+		URIDecodeBin.class
 	};
 }
