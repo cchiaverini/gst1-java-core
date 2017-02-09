@@ -24,11 +24,10 @@ package org.freedesktop.gstreamer;
 
 import com.sun.jna.Pointer;
 import java.nio.ByteBuffer;
-
 import org.freedesktop.gstreamer.lowlevel.GstBufferAPI;
-import org.freedesktop.gstreamer.lowlevel.GstBufferAPI.MapInfoStruct;
-
+import org.freedesktop.gstreamer.lowlevel.GstBufferAPI.BufferStruct;
 import static org.freedesktop.gstreamer.lowlevel.GstBufferAPI.GSTBUFFER_API;
+import org.freedesktop.gstreamer.lowlevel.GstBufferAPI.MapInfoStruct;
 
 /**
  * Data-passing buffer type, supporting sub-buffers.
@@ -91,12 +90,34 @@ public class Buffer extends MiniObject {
     public static final String GTYPE_NAME = "GstBuffer";
 
     private final MapInfoStruct mapInfo;
+    private final BufferStruct struct;
     
     public Buffer(Initializer init) {
         super(init);
         mapInfo = new MapInfoStruct();
+        struct = new BufferStruct(handle());
     }
-    
+
+    public void setDuration(ClockTime dur) {
+        struct.duration = dur;
+        struct.writeField("duration");
+    }
+
+    /**
+     * Sets the timestamp in time of the buffer data, can be {@link ClockTime#NONE}
+     * when the timestamp is not known or relevant.
+     */
+    public void setTimestamp(ClockTime timestamp) {
+        struct.pts = timestamp;
+        struct.writeField("pts");
+    }
+
+        
+    public void setDts(ClockTime dts) {
+        struct.dts = dts;
+        struct.writeField("dts");
+    }
+        
     /**
      * Creates a newly allocated buffer without any data.
      */

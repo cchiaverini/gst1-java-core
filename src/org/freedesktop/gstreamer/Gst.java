@@ -484,6 +484,7 @@ public final class Gst {
 		FakeSink.class,
 		Pipeline.class,
 		PlayBin.class,
+		TagList.class,
 		URIDecodeBin.class
 	};
 }
